@@ -14,6 +14,17 @@ pipeline {
             }
         }
         
+        stage('Verify Kubernetes') {
+            steps {
+                script {
+                    echo 'Verifying Kubernetes connection...'
+                    bat 'kubectl config use-context docker-desktop'
+                    bat 'kubectl cluster-info'
+                    bat 'kubectl get nodes'
+                }
+            }
+        }
+        
         stage('Build Docker Image') {
             steps {
                 script {
@@ -33,25 +44,21 @@ pipeline {
             }
         }
         
-        stage('Configure Kubernetes') {
-            steps {
-                script {
-                    echo 'Setting up Kubernetes context...'
-                    // Use docker-desktop context
-                    bat 'kubectl config use-context docker-desktop'
-                    bat 'kubectl cluster-info'
-                }
-            }
-        }
-        
         stage('Deploy to Kubernetes') {
             steps {
                 script {
                     echo 'Deploying to Kubernetes...'
+                    
+                    // Apply Kubernetes configurations
                     bat 'kubectl apply -f k8s/deployment.yaml'
                     bat 'kubectl apply -f k8s/service.yaml'
+                    
+                    // Wait for deployment to complete
+                    echo 'Waiting for deployment rollout...'
                     bat 'kubectl rollout status deployment/nodejs-app --timeout=120s'
-                    echo 'Deployment successful!'
+                    
+                    // Show deployment status
+                    echo 'Current deployment status:'
                     bat 'kubectl get pods -l app=nodejs-app'
                     bat 'kubectl get svc nodejs-app-service'
                 }
@@ -62,13 +69,21 @@ pipeline {
     post {
         success {
             echo '========================================='
-            echo 'Pipeline completed successfully!'
-            echo 'Access your application at: http://localhost:30080'
-            echo 'To check status: kubectl get all'
+            echo '✅ Pipeline completed successfully!'
+            echo '========================================='
+            echo 'Application deployed and running!'
+            echo ''
+            echo 'Access your app: http://localhost:30080'
+            echo ''
+            echo 'Useful commands:'
+            echo '  kubectl get pods              - View pods'
+            echo '  kubectl get svc               - View services'
+            echo '  kubectl logs -l app=nodejs-app - View logs'
             echo '========================================='
         }
         failure {
-            echo 'Pipeline failed! Check logs above for details.'
+            echo '❌ Pipeline failed!'
+            echo 'Check the error messages above for details.'
         }
     }
 }
