@@ -37,7 +37,6 @@ pipeline {
             steps {
                 script {
                     echo 'Deploying to Kubernetes...'
-                    bat 'kubectl config use-context docker-desktop'
                     bat 'kubectl apply -f k8s/deployment.yaml'
                     bat 'kubectl apply -f k8s/service.yaml'
                     bat 'kubectl rollout status deployment/nodejs-app'
