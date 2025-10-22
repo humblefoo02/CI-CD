@@ -4,6 +4,8 @@ pipeline {
     environment {
         DOCKER_IMAGE = 'nodejs-app'
         DOCKER_TAG = "${BUILD_NUMBER}"
+        // Explicitly set kubeconfig path
+        KUBECONFIG = 'C:\\Users\\dimfo\\.kube\\config'
     }
     
     stages {
@@ -18,6 +20,12 @@ pipeline {
             steps {
                 script {
                     echo 'Verifying Kubernetes connection...'
+                    
+                    // Debug: Show what kubectl sees
+                    bat 'kubectl config view'
+                    bat 'kubectl config get-contexts'
+                    
+                    // Use the docker-desktop context
                     bat 'kubectl config use-context docker-desktop'
                     bat 'kubectl cluster-info'
                     bat 'kubectl get nodes'
